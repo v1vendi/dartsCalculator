@@ -1,32 +1,20 @@
-﻿function EloRank(k) {
-    
-    if (!(this instanceof EloRank))
-        return new EloRank(k);
-    
-    this.k = k || 32;
+﻿function OnlinerRank() {    
     return this;
 }
 
-EloRank.prototype.setKFactor = function (n) {
-    this.k = n;
+
+
+OnlinerRank.prototype.winnerRatingAddon = function (winnerRating, loserRating) {
+    if(winnerRating - loserRating >= 100 ){
+        return 0;
+    }
+    return Math.round((100 - winnerRating + loserRating) / 10);
 }
 
-EloRank.prototype.getKFactor = function () {
-    return this.k;
-}
 
-EloRank.prototype.getExpected = function (a, b) {
-    return 1 / (1 + Math.pow(10, ((b - a) / 400)));
-}
-
-EloRank.prototype.updateRating = function (expected, actual, current) {
-    return current + this.k * (actual - expected);
-}
-
-EloRank.prototype.updateRatings = function (winner, loser) {
-    var expW = this.getExpected(winner.rating, loser.rating);
-    var expL = this.getExpected(loser.rating, winner.rating);
-
-    winner.rating = this.updateRating(expW, 1, winner.rating);
-    loser.rating = this.updateRating(expL, 0, loser.rating);
+OnlinerRank.prototype.loserRatingAddon = function (winnerRating, loserRating) {
+    if (winnerRating - loserRating >= 100) {
+        return 0;
+    }
+    return Math.round((100 - winnerRating + loserRating) / -20);
 }

@@ -12,23 +12,19 @@
     </head>
     <body>
         <script src='EloRank.js'></script>
+        <script src='Darts.js'></script>
 
         <script>
 
             var game;
-            var elo = new EloRank();
+            var elo = new OnlinerRank();
 
             function Player(name, rating) {
                 this.name = name;
                 this.rating = rating || 1000;
             }
 
-            var players = [
-                new Player('Илья К', 1000),
-                new Player('Илья Б', 1000),
-                new Player('Серёжа', 1000)
-            ];
-
+            var players = loadPlayers();
 
             window.onload = renderPlayers;
 
@@ -52,11 +48,24 @@
                 })
             }
 
+            function loadPlayers() {
+                return JSON.parse(window.localStorage.getItem('dartsPlayers')) || [];
+            }
+
+            function savePlayers(players) {
+                window.localStorage.setItem('dartsPlayers', JSON.stringify(players));
+            }
+
             function shoot(event) {
 
                 var input = document.getElementById('nextShot');
 
-                game.throw(parseInt(input.value));
+                if (input.value === '') {
+                    game.throw(0);
+
+                } else {
+                    game.throw(parseInt(input.value));
+                }
 
                 input.value = '';
                 input.focus();
@@ -76,141 +85,28 @@
                 game = new Game(selectedPlayers, gameTable);
                 game.render();
 
-                document.querySelector('form input').focus();
+                document.querySelector('#shotForm input').focus();
             };
 
-            function Game(players, container) {
+            function addPlayer() {
+                var name = document.getElementById('newPlayer').value;
 
-                var game = this;
+                var newPlayer = new Player(name, 1000);
+                players.push(newPlayer);
 
-                this.players = players;
-                this.currentPlayer = players[0];
-                this.score = [];
-
-                players.forEach(function (player, index) {
-                    game.score[player.name] = [301];
-                });
-
-                this.container = container;
-            }
-
-            Game.prototype.render = function () {
-                var game = this;
-
-                var tableHeader = this.container.querySelector('thead tr');
-                var tbody = this.container.querySelector('tbody');
-                tableHeader.innerHTML = '';
-                tbody.innerHTML = '';
-
-                this.players.forEach(function (player) {
-
-                    var th = document.createElement('th');
-                    th.textContent = player.name;
-
-                    if (player === game.currentPlayer) {
-                        th.classList.add('active');
-                    }
-
-                    tableHeader.appendChild(th);
-                });
-
-                var firstPlayer = this.players[0];
-                var rounds = this.score[firstPlayer.name].length;
-
-                for (var i = 0; i < rounds; i++) {
-                    var tr = document.createElement('tr');
-
-                    game.players.forEach(function (player) {
-                        var td = document.createElement('td');
-                        td.textContent = game.score[player.name][i];
-
-                        tr.appendChild(td);
-                    });
-
-                    tbody.appendChild(tr);
-                }
-            }
-
-            Game.prototype.throw = function (score) {
-                var currentPlayerScores = this.score[this.currentPlayer.name];
-
-                var lastScore = this.score[this.currentPlayer.name].last();
-
-                if (lastScore < score) {
-                    currentPlayerScores.push(lastScore);
-                } else {
-                    currentPlayerScores.push(lastScore - score);
-                }
-
-                if (this.currentPlayer === this.players.last()) {
-                    this.validateWinner();
-                }
-
-                this.setNextPlayer();
-
-                this.render();
-            }
-
-            Game.prototype.endGame = function () {
-
-            };
-
-            Game.prototype.validateWinner = function () {
-                var game = this;
-
-                this.winners = this.players.filter(function (player) {
-                    return game.score[player.name].last() === 0;
-                });
-
-                this.winners.forEach(function (player) {
-                    game.updateRating(player);
-                });
-
-            };
-
-            Game.prototype.updateRating = function (winner) {
-                var game = this;
-
-                var losers = this.players.filter(function (player) {
-                    return game.score[player.name].last() > 0;
-                });
-
-                losers.forEach(function (loser) {
-
-                    elo.updateRatings(winner, loser)
-                });
-
+                savePlayers(players);
                 renderPlayers();
-            };
-
-            Game.prototype.setNextPlayer = function () {
-                var currentPlayerIndex = this.players.indexOf(this.currentPlayer);
-
-                if (this.score.every(function (score) {
-                    score.last() === 0;
-                })) {
-                    this.endGame();
-                    return;
-                }
-
-                if (currentPlayerIndex === this.players.length - 1) {
-                    this.currentPlayer = this.players[0];
-                } else {
-                    this.currentPlayer = this.players[currentPlayerIndex + 1];
-                }
-
-                if (this.score[this.currentPlayer.name] === 0) {
-
-                    this.players.splice(currentPlayerIndex, 1);
-                    this.setNextPlayer();
-                }
             }
 
-            Array.prototype.last = function () {
-                return this[this.length - 1];
+            function endGame() {
+                game.endGame();
             }
-
         </script>
+
+        <form action="/" method="post">
+            <input type="text" id="newPlayer" placeholder="New Player"/>
+            <button onclick="addPlayer(); return false;">Register</button>
+        </form>
 
         <ul id='playersList'></ul>
         <button onclick="startNewGame()">Погнали</button>
@@ -224,10 +120,12 @@
             </tbody>
         </table>
 
-        <form>
+        <form id="shotForm">
             <input type="text" id="nextShot" />
             <button onclick="shoot(); return false;">Fire in the hole!</button>
         </form>
+
+        <button onclick="endGame()">End game</button>
     </body>
 </html>
 
