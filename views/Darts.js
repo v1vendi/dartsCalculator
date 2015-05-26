@@ -1,4 +1,4 @@
-if (!Array.prototype.last) {
+ï»¿if (!Array.prototype.last) {
     Array.prototype.last = function () {
         return this[this.length - 1];
     }
@@ -15,6 +15,7 @@ Array.prototype.shuffle = function () {
     return this;
 }
 
+
 function Game(players, container) {
 
     var game = this;
@@ -23,7 +24,7 @@ function Game(players, container) {
     this.currentPlayer = this.players[0];
     this.score = [];
     
-    this.results = [];
+    this.finished = false;
 
     players.forEach(function (player, index) {
         game.score[player.name] = [301];
@@ -35,8 +36,13 @@ function Game(players, container) {
 Game.prototype.throw = function (score) {
 
     if (score != parseInt(score)) {
-        alert('Ââîäè òîëüêî öèôðû, áëåàòü');
+        alert('Ð’Ð²Ð¾Ð´Ð¸ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ñ†Ð¸Ñ„Ñ€Ñ‹, Ð±Ð»ÐµÐ°Ñ‚ÑŒ');
         this.render();
+        return;
+    }
+
+    if (score > 180) {
+        alert('ÐÐµ Ð¿Ð¸Ð·Ð´Ð¸, Ð±Ð»ÐµÐ°Ñ‚ÑŒ');
         return;
     }
 
@@ -70,13 +76,14 @@ Game.prototype.throw = function (score) {
 Game.prototype.endGame = function () {
     var game = this;
 
-    players.forEach(function (player) {
-        game.updateRating(player);
-    });
+    game.finished = true;
 
-    game.score = [];
-    game.render();
-    renderPlayers();
+    var endGameEvent = new CustomEvent('gameEnd', {
+        detail: {
+            results: game.players
+        }
+    });
+    document.dispatchEvent(endGameEvent);
 };
 
 Game.prototype.validateWinner = function () {
@@ -91,31 +98,6 @@ Game.prototype.validateWinner = function () {
         player.finished = true;
         player.shots = game.score[player.name].length - 1;
     });
-
-};
-
-Game.prototype.updateRating = function (winner) {
-
-    if (!winner.finished) {
-        return;
-    }
-
-    var game = this;
-
-    var losers = this.players.filter(function (player) {
-        return (!player.finished || player.shots > winner.shots);
-    });
-
-    winnerRatingAddon = 0;
-
-    losers.forEach(function (loser) {
-
-        winnerRatingAddon += elo.winnerRatingAddon(winner.rating, loser.rating);
-
-        loser.rating += elo.loserRatingAddon(winner.rating, loser.rating);
-    });
-
-    winner.rating += winnerRatingAddon;
 
 };
 

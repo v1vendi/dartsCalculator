@@ -1,6 +1,7 @@
 ﻿<doctype html>
     <html>
     <head>
+        <meta charset="utf-8"/>
         <title>IntDev Darts ranking</title>
         <link rel=stylesheet href='stylesheets/style.css'>
         <style>
@@ -53,7 +54,13 @@
             }
 
             function savePlayers(players) {
-                window.localStorage.setItem('dartsPlayers', JSON.stringify(players));
+                var data = players.map(function (player) {
+                    return {
+                        name: player.name,
+                        rating: player.rating
+                    };
+                });
+                window.localStorage.setItem('dartsPlayers', JSON.stringify(data));
             }
 
             function shoot(event) {
@@ -81,9 +88,22 @@
 
                 var gameTable = document.getElementById('gameTable');
 
-
                 game = new Game(selectedPlayers, gameTable);
+                document.getElementById('game').style.display = 'block';
                 game.render();
+
+                document.addEventListener('gameEnd', function (e) {
+                    var results = e.detail.results;
+
+                    results.forEach(function (player) {
+                        updateRating(player, results);
+                    });
+
+                    savePlayers(players);
+                    renderPlayers();
+
+                    document.getElementById('game').style.display = 'none';
+                });
 
                 document.querySelector('#shotForm input').focus();
             };
@@ -101,31 +121,61 @@
             function endGame() {
                 game.endGame();
             }
+
+            function updateRating(winner, players) {
+
+                if (!winner.finished) {
+                    return;
+                }
+
+                var losers = players.filter(function (player) {
+                    return (!player.finished || player.shots > winner.shots);
+                });
+
+                var winnerRatingAddon = 0;
+
+                losers.forEach(function (loser) {
+
+                    winnerRatingAddon += elo.winnerRatingAddon(winner.rating, loser.rating);
+
+                    loser.rating += elo.loserRatingAddon(winner.rating, loser.rating);
+                });
+
+                winner.rating += winnerRatingAddon;
+
+            };
         </script>
 
         <form action="/" method="post">
-            <input type="text" id="newPlayer" placeholder="New Player"/>
+            <input type="text" id="newPlayer" placeholder="New Player" />
             <button onclick="addPlayer(); return false;">Register</button>
         </form>
 
         <ul id='playersList'></ul>
         <button onclick="startNewGame()">Погнали</button>
 
-        <table id="gameTable">
-            <thead>
-                <tr></tr>
-            </thead>
-            <tbody>
-                <tr></tr>
-            </tbody>
-        </table>
 
-        <form id="shotForm">
-            <input type="text" id="nextShot" />
-            <button onclick="shoot(); return false;">Fire in the hole!</button>
-        </form>
+        <div id="game" style="display:none">
+            <table id="gameTable">
+                <thead>
+                    <tr></tr>
+                </thead>
+                <tbody>
+                    <tr></tr>
+                </tbody>
+            </table>
 
-        <button onclick="endGame()">End game</button>
+            <form id="shotForm">
+                <input type="text" id="nextShot" />
+                <button onclick="shoot(); return false;">
+                    Fire in the hole!
+                </button>
+            </form>
+
+            <button type="button" onclick="endGame(); return false">
+                End game
+            </button>
+        </div>
     </body>
 </html>
 
