@@ -45,7 +45,9 @@ Game.prototype.throw = function (score) {
     var finishedPlayers = this.players.filter(function (player) {
         return !player.finished;
     });
+
     if (finishedPlayers.length <= 1) {
+        this.endGame();
         return;
     }
 

@@ -1,7 +1,7 @@
-﻿<doctype html>
+﻿<doctype html />
     <html>
     <head>
-        <meta charset="utf-8"/>
+        <meta charset="utf-8" />
         <title>IntDev Darts ranking</title>
         <link rel=stylesheet href='stylesheets/style.css'>
         <style>
@@ -16,17 +16,17 @@
         <script src='EloRank.js'></script>
         <script src='Darts.js'></script>
 
-        <script>            
+        <script>
 
             var game;
             var elo = new OnlinerRank();
 
-            function Player(name, rating) {
-                this.name = name;
-                this.rating = rating || 1000;
+            function Player(playerModel) {
+                this.name = playerModel.name;
+                this.rating = playerModel.rating || 1000;
             }
 
-            var players = loadPlayers().orderBy('rating');
+            var players = loadPlayers().orderBy('rating', true);
 
             window.onload = renderPlayers;
 
@@ -37,6 +37,7 @@
 
                 var t = document.getElementById('playerTemplate');
                 var span = t.content.querySelector('span');
+
                 players.forEach(function (player) {
                     span.textContent = player.name + '(' + player.rating + ')';
 
@@ -47,11 +48,15 @@
                     li.appendChild(clone);
 
                     playersList.appendChild(li);
-                })
+                });
             }
 
             function loadPlayers() {
-                return JSON.parse(window.localStorage.getItem('dartsPlayers')) || [];
+                var playersModel = JSON.parse(window.localStorage.getItem('dartsPlayers')) || [];
+
+                return playersModel.map(function(p) {
+                    return new Player(p);
+                });
             }
 
             function savePlayers(players) {
@@ -64,7 +69,7 @@
                 window.localStorage.setItem('dartsPlayers', JSON.stringify(data));
             }
 
-            function shoot(event) {
+            function shoot() {
 
                 var input = document.getElementById('nextShot');
 
@@ -100,6 +105,8 @@
                         updateRating(player, results);
                     });
 
+                    players.orderBy('rating', true);
+
                     savePlayers(players);
                     renderPlayers();
 
@@ -112,8 +119,11 @@
             function addPlayer() {
                 var name = document.getElementById('newPlayer').value;
 
-                var newPlayer = new Player(name, 1000);
-                players.push(newPlayer);
+                var newPlayer = new Player({
+                    name: name,
+                    rating: 1000
+                });
+                players.push(newPlayer).orderBy('rating', true);
 
                 savePlayers(players);
                 renderPlayers();
@@ -123,14 +133,20 @@
                 game.endGame();
             }
 
-            function updateRating(winner, players) {
+            function updateRating(winner, gameResults) {
 
                 if (!winner.finished) {
                     return;
                 }
 
-                var losers = players.filter(function (player) {
+                var losersModel = gameResults.filter(function (player) {
                     return (!player.finished || player.shots > winner.shots);
+                });
+
+                var losers = losersModel.map(function(model) {
+                    return players.find(where({
+                        name: model.name
+                    }));
                 });
 
                 var winnerRatingAddon = 0;
@@ -152,7 +168,7 @@
             <button onclick="addPlayer(); return false;">Register</button>
         </form>
 
-        <ul id='playersList'></ul>
+        <ol id='playersList'></ol>
         <button onclick="startNewGame()">Погнали</button>
 
 
@@ -173,18 +189,18 @@
                 </button>
             </form>
 
-            <button type="button" onclick="endGame(); return false">
+            <button type="button" onclick="endGame(); return false;">
                 End game
             </button>
         </div>
     </body>
-</html>
+    </html>
 
 
-<template id='playerTemplate'>
-    <input type='checkbox'>
-    <span></span>
-</template>
+    <template id='playerTemplate'>
+        <input type='checkbox'>
+        <span></span>
+    </template>
 
 
 
