@@ -1,206 +1,208 @@
 ﻿<doctype html />
-    <html>
-    <head>
-        <meta charset="utf-8" />
-        <title>IntDev Darts ranking</title>
-        <link rel=stylesheet href='stylesheets/style.css'>
-        <style>
-            .active {
-                background-color: black;
-                color: white;
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>IntDev Darts ranking</title>
+    <link rel=stylesheet href='stylesheets/style.css'>
+    <style>
+        .active {
+            background-color: black;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <script src='lib.js'></script>
+    <script src='EloRank.js'></script>
+    <script src='Darts.js'></script>
+
+    <script>
+
+        var game;
+        var elo = new OnlinerRank();
+
+        function Player(playerModel) {
+            this.name = playerModel.name;
+            this.rating = playerModel.rating || 1000;
+        }
+
+        var players = loadPlayers().orderBy('rating', true);
+
+        window.onload = renderPlayers;
+
+        function renderPlayers() {
+
+            var playersList = document.getElementById('playersList');
+            playersList.innerHTML = '';
+
+            var t = document.getElementById('playerTemplate');
+            var span = t.content.querySelector('span');
+
+            players.forEach(function (player) {
+                span.textContent = player.name + '(' + player.rating + ')';
+
+                var li = document.createElement('li');
+                li.id = player.name;
+
+                var clone = document.importNode(t.content, true);
+                li.appendChild(clone);
+
+                playersList.appendChild(li);
+            });
+        }
+
+        function loadPlayers() {
+            var playersModel = JSON.parse(window.localStorage.getItem('dartsPlayers')) || [];
+
+            return playersModel.map(function (p) {
+                return new Player(p);
+            });
+        }
+
+        function savePlayers(players) {
+            var data = players.map(function (player) {
+                return {
+                    name: player.name,
+                    rating: player.rating
+                };
+            });
+            window.localStorage.setItem('dartsPlayers', JSON.stringify(data));
+        }
+
+        function shoot() {
+
+            var input = document.getElementById('nextShot');
+
+            if (input.value === '') {
+                game.throw(0);
+
+            } else {
+                game.throw(parseInt(input.value));
             }
-        </style>
-    </head>
-    <body>
-        <script src='lib.js'></script>
-        <script src='EloRank.js'></script>
-        <script src='Darts.js'></script>
 
-        <script>
+            input.value = '';
+            input.focus();
+        };
 
-            var game;
-            var elo = new OnlinerRank();
+        function startNewGame() {
+            var selectedPlayers = players.filter(function (player) {
 
-            function Player(playerModel) {
-                this.name = playerModel.name;
-                this.rating = playerModel.rating || 1000;
-            }
+                var node = document.getElementById(player.name);
 
-            var players = loadPlayers().orderBy('rating', true);
+                return node.childNodes[1].checked;
+            });
 
-            window.onload = renderPlayers;
+            var gameTable = document.getElementById('gameTable');
 
-            function renderPlayers() {
+            game = new Game(selectedPlayers, gameTable);
+            document.getElementById('game').style.display = 'block';
+            game.render();
 
-                var playersList = document.getElementById('playersList');
-                playersList.innerHTML = '';
+            document.addEventListener('gameEnd', function (e) {
+                var results = e.detail.results;
 
-                var t = document.getElementById('playerTemplate');
-                var span = t.content.querySelector('span');
-
-                players.forEach(function (player) {
-                    span.textContent = player.name + '(' + player.rating + ')';
-
-                    var li = document.createElement('li');
-                    li.id = player.name;
-
-                    var clone = document.importNode(t.content, true);
-                    li.appendChild(clone);
-
-                    playersList.appendChild(li);
-                });
-            }
-
-            function loadPlayers() {
-                var playersModel = JSON.parse(window.localStorage.getItem('dartsPlayers')) || [];
-
-                return playersModel.map(function(p) {
-                    return new Player(p);
-                });
-            }
-
-            function savePlayers(players) {
-                var data = players.map(function (player) {
-                    return {
-                        name: player.name,
-                        rating: player.rating
-                    };
-                });
-                window.localStorage.setItem('dartsPlayers', JSON.stringify(data));
-            }
-
-            function shoot() {
-
-                var input = document.getElementById('nextShot');
-
-                if (input.value === '') {
-                    game.throw(0);
-
-                } else {
-                    game.throw(parseInt(input.value));
-                }
-
-                input.value = '';
-                input.focus();
-            };
-
-            function startNewGame() {
-                var selectedPlayers = players.filter(function (player) {
-
-                    var node = document.getElementById(player.name);
-
-                    return node.childNodes[1].checked;
+                results.forEach(function (player) {
+                    updateRating(player, results);
                 });
 
-                var gameTable = document.getElementById('gameTable');
-
-                game = new Game(selectedPlayers, gameTable);
-                document.getElementById('game').style.display = 'block';
-                game.render();
-
-                document.addEventListener('gameEnd', function (e) {
-                    var results = e.detail.results;
-
-                    results.forEach(function (player) {
-                        updateRating(player, results);
-                    });
-
-                    players.orderBy('rating', true);
-
-                    savePlayers(players);
-                    renderPlayers();
-
-                    document.getElementById('game').style.display = 'none';
-                });
-
-                document.querySelector('#shotForm input').focus();
-            };
-
-            function addPlayer() {
-                var name = document.getElementById('newPlayer').value;
-
-                var newPlayer = new Player({
-                    name: name,
-                    rating: 1000
-                });
-                players.push(newPlayer).orderBy('rating', true);
+                players.orderBy('rating', true);
 
                 savePlayers(players);
                 renderPlayers();
+
+                document.getElementById('game').style.display = 'none';
+            });
+
+            document.querySelector('#shotForm input').focus();
+        };
+
+        function addPlayer() {
+            var name = document.getElementById('newPlayer').value;
+
+            var newPlayer = new Player({
+                name: name,
+                rating: 1000
+            });
+            players.push(newPlayer).orderBy('rating', true);
+
+            savePlayers(players);
+            renderPlayers();
+        }
+
+        function endGame() {
+            game.endGame();
+        }
+
+        function updateRating(winner, gameResults) {
+
+            if (!winner.finished) {
+                return;
             }
 
-            function endGame() {
-                game.endGame();
-            }
+            var losersModel = gameResults.filter(function (player) {
+                return (!player.finished || player.shots > winner.shots);
+            });
 
-            function updateRating(winner, gameResults) {
+            var losers = losersModel.map(function (model) {
+                return players.find(where({
+                    name: model.name
+                }));
+            });
 
-                if (!winner.finished) {
-                    return;
-                }
+            var winnerRatingAddon = 0;
 
-                var losersModel = gameResults.filter(function (player) {
-                    return (!player.finished || player.shots > winner.shots);
-                });
+            losers.forEach(function (loser) {
 
-                var losers = losersModel.map(function(model) {
-                    return players.find(where({
-                        name: model.name
-                    }));
-                });
+                winnerRatingAddon += elo.winnerRatingAddon(winner.rating, loser.rating);
 
-                var winnerRatingAddon = 0;
+                loser.rating += elo.loserRatingAddon(winner.rating, loser.rating);
+            });
 
-                losers.forEach(function (loser) {
+            winner.rating += winnerRatingAddon;
 
-                    winnerRatingAddon += elo.winnerRatingAddon(winner.rating, loser.rating);
+        };
+    </script>
 
-                    loser.rating += elo.loserRatingAddon(winner.rating, loser.rating);
-                });
 
-                winner.rating += winnerRatingAddon;
 
-            };
-        </script>
+    <form action="/" method="post">
+        <input type="text" id="newPlayer" placeholder="New Player" />
+        <button onclick="addPlayer(); return false;">Register</button>
+    </form>
 
-        <form action="/" method="post">
-            <input type="text" id="newPlayer" placeholder="New Player" />
-            <button onclick="addPlayer(); return false;">Register</button>
+    <ol id='playersList'></ol>
+    <button onclick="startNewGame()">Погнали</button>
+
+
+    <div id="game" style="display:none">
+        <table id="gameTable">
+            <thead>
+                <tr></tr>
+            </thead>
+            <tbody>
+                <tr></tr>
+            </tbody>
+        </table>
+
+        <form id="shotForm">
+            <input type="text" id="nextShot" />
+            <button onclick="shoot(); return false;">
+                Fire in the hole!
+            </button>
         </form>
 
-        <ol id='playersList'></ol>
-        <button onclick="startNewGame()">Погнали</button>
+        <button type="button" onclick="endGame(); return false;">
+            End game
+        </button>
+    </div>
+</body>
+</html>
 
 
-        <div id="game" style="display:none">
-            <table id="gameTable">
-                <thead>
-                    <tr></tr>
-                </thead>
-                <tbody>
-                    <tr></tr>
-                </tbody>
-            </table>
-
-            <form id="shotForm">
-                <input type="text" id="nextShot" />
-                <button onclick="shoot(); return false;">
-                    Fire in the hole!
-                </button>
-            </form>
-
-            <button type="button" onclick="endGame(); return false;">
-                End game
-            </button>
-        </div>
-    </body>
-    </html>
-
-
-    <template id='playerTemplate'>
-        <input type='checkbox'>
-        <span></span>
-    </template>
+<template id='playerTemplate'>
+    <input type='checkbox'>
+    <span></span>
+</template>
 
 
 
