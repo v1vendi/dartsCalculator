@@ -2,8 +2,6 @@
     return this;
 }
 
-
-
 OnlinerRank.prototype.winnerRatingAddon = function (winnerRating, loserRating) {
     if(winnerRating - loserRating >= 100 ){
         return 0;

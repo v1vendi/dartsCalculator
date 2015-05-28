@@ -46,7 +46,6 @@ Game.prototype.throw = function (score) {
         return !player.finished;
     });
     if (finishedPlayers.length <= 1) {
-        this.endGame();
         return;
     }
 
@@ -58,14 +57,16 @@ Game.prototype.throw = function (score) {
 Game.prototype.endGame = function () {
     var game = this;
 
-    game.finished = true;
+    if (window.confirm('Закончили?')) {
+        game.finished = true;
 
-    var endGameEvent = new CustomEvent('gameEnd', {
-        detail: {
-            results: game.players
-        }
-    });
-    document.dispatchEvent(endGameEvent);
+        var endGameEvent = new CustomEvent('gameEnd', {
+            detail: {
+                results: game.players
+            }
+        });
+        document.dispatchEvent(endGameEvent);
+    }
 };
 
 Game.prototype.validateWinner = function () {
