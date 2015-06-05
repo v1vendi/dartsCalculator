@@ -7,7 +7,7 @@
     game.straightOut = straightOut === false ? false : true;
     
     game.players = players.map(function (p) {
-        return new Darts.player(game, p, scoreToWin);
+        return new Darts.Player(game, p, scoreToWin);
     });
     
     game.currentPlayer = this.players[0];
@@ -16,7 +16,7 @@
     game.container = container;
 }
 
-Darts.player = function (game, player, score) {
+Darts.Player = function (game, player, score) {
     
     this.game = game;
     this.name = player.name;
@@ -28,18 +28,18 @@ Darts.player = function (game, player, score) {
     this.turnsCount = 0;
 }
 
-Darts.player.prototype.shoot = function (score, sector) {
+Darts.Player.prototype.shoot = function (score, sector) {
     
     var player = this;
     
     var shotScore = score * sector;
     
-    if (score != parseInt(score)) {
+    if (score !== parseInt(score)) {
         alert('Вводи только цифры, блеать');
         return Darts.shotResults.mistake;
     }
     
-    if (score > 20 && score != 25) {
+    if (score > 20 && score !== 25) {
         alert('Не пизди, блеать');
         return Darts.shotResults.mistake;
     }
@@ -86,9 +86,9 @@ Darts.player.prototype.shoot = function (score, sector) {
 }
 
 Darts.sector = {
-    single: 1,
-    double: 2, 
-    triple: 3
+    'single': 1,
+    'double': 2, 
+    'triple': 3
 }
 
 Darts.shotResults = {
@@ -146,7 +146,7 @@ Darts.prototype.setNextPlayer = function () {
     
     var currentPlayerIndex = this.players.indexOf(this.currentPlayer);
     
-    if (this.currentPlayer === this.players[this.players.length - 1) {
+    if (this.currentPlayer === this.players[this.players.length - 1]) {
         this.currentPlayer = this.players[0];
 
     } else {
@@ -172,13 +172,12 @@ Darts.prototype.render = function () {
         th.textContent = player.name;
         
         if (player === game.currentPlayer) {
-            th.classList.add('active');
+            th.classList.add('info');
         }
         
         tableHeader.appendChild(th);
     });
     
-    var firstPlayer = this.players[0];
     var rounds = this.turnsCount;
     
     
@@ -196,20 +195,24 @@ Darts.prototype.render = function () {
     }
     
     var tfoot = this.container.querySelector('tfoot');
+    var tr = document.createElement('tr');
+    tr.classList.add('active');
+
     tfoot.innerHTML = "";
+    tfoot.appendChild(tr);
     
     game.players.forEach(function (player) {
         
         var turnScore = 0;
-        player.turn.forEach(function (t) {
+        player.turn.forEach(function(t) {
             turnScore += t;
-        })
+        });
         
         var currentScore = player.score - turnScore;
         
         var th = document.createElement('th');
         th.textContent = currentScore;
         
-        tfoot.appendChild(th);
+        tr.appendChild(th);
     });
 }

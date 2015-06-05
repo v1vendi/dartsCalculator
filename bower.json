@@ -1,0 +1,19 @@
+{
+  "name": "dartsCalculator",
+  "version": "0.3",
+  "homepage": "https://github.com/v1vendi/dartsCalculator",
+  "authors": [
+    "v1vendi (ilya.komsa@gmail.com)"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "~3.3.4"
+  }
+}

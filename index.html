@@ -4,15 +4,18 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width">
     <title>IntDev Darts ranking</title>
-    <link rel=stylesheet href='stylesheets/style.css'>
+    <link rel=stylesheet href='bower_components/bootstrap/dist/css/bootstrap.css'>
     <style>
-        .active {
-            background-color: black;
-            color: white;
+        body {
+            padding-top: 1em;
         }
 
         #shotForm button {
-            font-size: 16px;
+            width: 100%;
+        }
+
+        #game, #shotForm {
+            padding: 1em 0; 
         }
     </style>
 </head>
@@ -20,256 +23,64 @@
     <script src='lib.js'></script>
     <script src='EloRank.js'></script>
     <script src='Darts.js'></script>
+    <script src='game.js'></script>
 
-    <script>
+    <div class="container">
+        <div id="players">
+            <form action="/" method="post" class="form-group">
+                <div class="row">
 
-        var game;
-        var elo = new OnlinerRank();
+                    <div class="col-sm-8 col-xs-8">
+                        <input type="text" id="newPlayer" placeholder="New Player" class="form-control" />
+                    </div>
 
-        function Player(playerModel) {
-            this.name = playerModel.name;
-            this.rating = playerModel.rating || 1000;
-        }
+                    <button onclick="addPlayer(); return false;" class="btn btn-primary col-sm-4 col-xs-3">
+                        Register
+                    </button>
+                </div>
+            </form>
 
-        var players = loadPlayers().orderBy('rating', true);
+            <ol id='playersList'></ol>
 
-        window.onload = renderPlayers;
+            <button onclick="startNewGame()" class="btn btn-primary">
+                Погнали
+            </button>
+        </div>
 
-        function renderPlayers() {
 
-            var playersList = document.getElementById('playersList');
-            playersList.innerHTML = '';
 
-            var t = document.getElementById('playerTemplate');
-            var span = t.content.querySelector('span');
+        <div id="game" style="display:none;" class="col-sm-6">
+            <table id="gameTable" class="table">
+                <thead>
+                    <tr></tr>
+                </thead>
+                <tbody>
+                    <tr></tr>
+                </tbody>
+                <tfoot></tfoot>
+            </table>
 
-            players.forEach(function (player) {
-                span.textContent = player.name + '(' + player.rating + ')';
 
-                var li = document.createElement('li');
-                li.id = player.name;
+            <button type="button" class="btn btn-danger" onclick="endGame(); return false;">
+                End game
+            </button>
+        </div>
 
-                var clone = document.importNode(t.content, true);
-                li.appendChild(clone);
 
-                playersList.appendChild(li);
-            });
-        }
-
-        function loadPlayers() {
-            var playersModel = JSON.parse(window.localStorage.getItem('dartsPlayers')) || [];
-
-            return playersModel.map(function (p) {
-                return new Player(p);
-            });
-        }
-
-        function savePlayers(players) {
-            var data = players.map(function (player) {
-                return {
-                    name: player.name,
-                    rating: player.rating
-                };
-            });
-            window.localStorage.setItem('dartsPlayers', JSON.stringify(data));
-        }
-
-        function shoot(score, sector) {
-
-            var input = document.getElementById('nextShot');
-
-            if (input.value === '') {
-                game.throw(0);
-
-            } else {
-                game.throw(parseInt(input.value));
-            }
-
-            input.value = '';
-            input.focus();
-        };
-
-        function startNewGame() {
-            var selectedPlayers = players.filter(function (player) {
-
-                var node = document.getElementById(player.name);
-
-                return node.childNodes[1].checked;
-            }).shuffle();
-
-            var gameTable = document.getElementById('gameTable');
-
-            game = new Darts(selectedPlayers, gameTable);
-
-            document.getElementById('players').style.display = 'none';
-
-            document.getElementById('game').style.display = 'block';
-            document.getElementById('shotForm').style.display = 'block';
-
-            game.render();
-            renderScoreButtons();
-
-            document.addEventListener('gameEnd', function (e) {
-                var results = e.detail.results;
-
-                results.forEach(function (player) {
-                    updateRating(player, results);
-                });
-
-                players.orderBy('rating', true);
-
-                savePlayers(players);
-                renderPlayers();
-
-                document.getElementById('game').style.display = 'none';
-                document.getElementById('shotForm').style.display = 'none';
-                document.getElementById('players').style.display = 'block';
-            });
-        };
-
-        function addPlayer() {
-            var name = document.getElementById('newPlayer').value;
-
-            var newPlayer = new Player({
-                name: name,
-                rating: 1000
-            });
-
-            players.push(newPlayer);
-            players.orderBy('rating', true);
-
-            savePlayers(players);
-            renderPlayers();
-
-            document.getElementById('newPlayer').value = "";
-        }
-
-        function endGame() {
-            game.endGame();
-        }
-
-        function updateRating(winner, gameResults) {
-
-            if (!winner.checkedOut) {
-                return;
-            }
-
-            var losersModel = gameResults.filter(function (player) {
-                return (!player.checkedOut || player.turnsCount > winner.turnsCount);
-            });
-
-            var losers = losersModel.map(function (model) {
-                return players.find(where({
-                    name: model.name
-                }));
-            });
-
-            var winnerRatingAddon = 0;
-
-            losers.forEach(function (loser) {
-
-                winnerRatingAddon += elo.winnerRatingAddon(winner.rating, loser.rating);
-
-                loser.rating += elo.loserRatingAddon(winner.rating, loser.rating);
-            });
-
-            winner.rating += winnerRatingAddon;
-
-        };
-
-        function renderScoreButtons() {
-            var prefix = ['S', 'D', 'T'];
-            var table = document.querySelector('#shotForm table');
-            var tr, td;
-
-            for (var i = 1; i <= 20; i++) {
-                tr = document.createElement('tr');
-
-                for (var j = 1; j <= 3; j++) {
-                    td = document.createElement('td');
-
-                    td.appendChild(getShootButton(game, i, j, prefix[j - 1] + i))
-
-                    tr.appendChild(td);
-                }
-
-                table.appendChild(tr);
-            }
-
-
-            tr = document.createElement('tr');
-
-            td = document.createElement('td');
-            td.appendChild(getShootButton(game, 25, 1, '25'))
-            tr.appendChild(td);
-
-            td = document.createElement('td');
-            td.appendChild(getShootButton(game, 25, 2, '50'))
-            tr.appendChild(td);
-
-            td = document.createElement('td');
-            td.appendChild(getShootButton(game, 0, 1, '0'))
-            tr.appendChild(td);
-
-            table.appendChild(tr);
-
-        }
-
-        function getShootButton(game, score, sector, name) {
-            var btn = document.createElement('button');
-            btn.type = 'button';
-
-            btn.textContent = name;
-
-            btn.onclick = function () {
-                game.throw(score, sector);
-            };
-
-            return btn;
-        }
-    </script>
-
-
-    <div id="players">
-        <form action="/" method="post">
-            <input type="text" id="newPlayer" placeholder="New Player" />
-            <button onclick="addPlayer(); return false;">Register</button>
+        <form id="shotForm" style="display: none;" class="col-sm-6 col-xs-12">
+            <table class="table"></table>
         </form>
 
-        <ol id='playersList'></ol>
-        <button onclick="startNewGame()">Погнали</button>
+        <footer style="text-align: center;">darts calculator v0.3b (c) v1vendi</footer>
     </div>
-
-    <div id="game" style="display:none; float: right;">
-        <table id="gameTable">
-            <thead>
-                <tr></tr>
-            </thead>
-            <tbody>
-                <tr></tr>
-            </tbody>
-            <tfoot></tfoot>
-        </table>
-
-
-        <button type="button" onclick="endGame(); return false;">
-            End game
-        </button>
-    </div>
-
-    <form id="shotForm" style="font-size: 16px;display: none;">
-        <table></table>
-    </form>
-
-
-    <center>darts calculator v0.3b (c) v1vendi</center>
 </body>
 </html>
 
 
 <template id='playerTemplate'>
-    <input type='checkbox'>
-    <span></span>
+    <label>
+        <input type='checkbox'>
+    </label>
 </template>
 
 
