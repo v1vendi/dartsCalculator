@@ -6,27 +6,39 @@
     <title>IntDev Darts ranking</title>
     <link rel=stylesheet href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css'>
     <style>
-        body {
-            padding-top: 1em;
-        }
 
         #shotForm button {
-            width: 100%;
+            margin: 1em;
+            width: 4em;
         }
 
-        #game, #shotForm {
-            padding: 1em 0; 
+        section {
+            padding: 1em 0;
+        }
+
+        #game {
+            position: relative;
+            background-color: white;
+            z-index: 1;
+        }
+
+        @media (max-width: 768px) {
+            #game {
+                border-bottom: 1px solid #333;
+            }
         }
     </style>
 </head>
 <body>
-    <script src='lib.js'></script>
-    <script src='EloRank.js'></script>
-    <script src='Darts.js'></script>
-    <script src='game.js'></script>
+<script src='lib.js'></script>
+<script src='EloRank.js'></script>
+<script src='Darts.js'></script>
+<script src='game.js'></script>
 
-    <div class="container">
-        <div id="players">
+<div class="container">
+
+    <div class="row">
+        <section id="players">
             <form action="/" method="post" class="form-group">
                 <div class="row">
 
@@ -34,7 +46,7 @@
                         <input type="text" id="newPlayer" placeholder="New Player" class="form-control" />
                     </div>
 
-                    <button onclick="addPlayer(); return false;" class="btn btn-primary col-sm-4 col-xs-3">
+                    <button onclick="addPlayer(); return false;" class="btn btn-primary col-sm-4 col-xs-4">
                         Register
                     </button>
                 </div>
@@ -45,34 +57,34 @@
             <button onclick="startNewGame()" class="btn btn-primary">
                 Погнали
             </button>
-        </div>
+        </section>
 
-
-
-        <div id="game" style="display:none;" class="col-sm-6">
+        <section id="game" style="display: none;" class="col-sm-6">
             <table id="gameTable" class="table">
                 <thead>
                     <tr></tr>
                 </thead>
-                <tbody>
+                <tfoot>
                     <tr></tr>
+                </tfoot>
+                <tbody>
                 </tbody>
-                <tfoot></tfoot>
             </table>
-
-
+            
             <button type="button" class="btn btn-danger" onclick="endGame(); return false;">
                 End game
             </button>
-        </div>
+        </section>
 
-
-        <form id="shotForm" style="display: none;" class="col-sm-6 col-xs-12">
-            <table class="table"></table>
-        </form>
+        <section>
+            <form id="shotForm" style="display: none;" class="col-sm-6 col-xs-12">
+                <table class="table"></table>
+            </form>
+        </section>
 
         <footer style="text-align: center;">darts calculator v0.3b (c) v1vendi</footer>
     </div>
+</div>
 </body>
 </html>
 

@@ -158,7 +158,7 @@ Darts.prototype.setNextPlayer = function () {
     }
 }
 
-Darts.prototype.render = function () {
+Darts.prototype.render = function (renderBody) {
     var game = this;
     
     var tableHeader = this.container.querySelector('thead tr');
@@ -177,29 +177,29 @@ Darts.prototype.render = function () {
         
         tableHeader.appendChild(th);
     });
-    
-    var rounds = this.turnsCount;
-    
-    
-    for (var i = 0; i < rounds; i++) {
-        var tr = document.createElement('tr');
-        
-        game.players.forEach(function (player) {
-            var td = document.createElement('td');
-            td.textContent = player.scoreHistory[i];
-            
-            tr.appendChild(td);
-        });
-        
-        tbody.appendChild(tr);
-    }
-    
-    var tfoot = this.container.querySelector('tfoot');
-    var tr = document.createElement('tr');
-    tr.classList.add('active');
 
-    tfoot.innerHTML = "";
-    tfoot.appendChild(tr);
+    if (renderBody) {
+        var rounds = this.turnsCount;
+
+
+        for (var i = 0; i < rounds; i++) {
+            var tr = document.createElement('tr');
+
+            game.players.forEach(function(player) {
+                var td = document.createElement('td');
+                td.textContent = player.scoreHistory[i];
+
+                tr.appendChild(td);
+            });
+
+            tbody.appendChild(tr);
+        }
+    }
+
+    var tableFooter = this.container.querySelector('tfoot tr');
+    tableFooter.classList.add('active');
+
+    tableFooter.innerHTML = "";
     
     game.players.forEach(function (player) {
         
@@ -213,6 +213,7 @@ Darts.prototype.render = function () {
         var th = document.createElement('th');
         th.textContent = currentScore;
         
-        tr.appendChild(th);
+        tableFooter.appendChild(th);
     });
+    
 }

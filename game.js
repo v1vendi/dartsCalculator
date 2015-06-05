@@ -54,7 +54,7 @@ function startNewGame() {
         
         var node = document.getElementById(player.name);
         
-        return node.querySelector('input[type=checkbox').checked;
+        return node.querySelector('input[type=checkbox]').checked;
     }).shuffle();
     
     var gameTable = document.getElementById('gameTable');
@@ -68,7 +68,11 @@ function startNewGame() {
     
     game.render();
     renderScoreButtons();
-    
+
+    document.addEventListener('scroll', function() {
+        document.getElementById('game').style.top = document.body.scrollTop;
+    });
+
     document.addEventListener('gameEnd', function (e) {
         var results = e.detail.results;
         
@@ -137,7 +141,7 @@ function updateRating(winnerResult, gameResults) {
         loser.rating += elo.loserRatingAddon(winner.rating, loser.rating);
     });
     
-    winnerResult.rating += winnerRatingAddon;
+    winner.rating += winnerRatingAddon;
 
 };
 
