@@ -53,12 +53,14 @@ Darts.Player.prototype.shoot = function (score, sector) {
     if (player.score < turnScore) {
         
         player.scoreHistory.push('-');
+        player.turn.length = 0;
         return Darts.shotResults.bust;
     }
     
     if (!player.game.straightOut && player.score - turnScore === 1) {
         
         player.scoreHistory.push('-');
+        player.turn.length = 0;
         return Darts.shotResults.bust;
     }
     
@@ -101,31 +103,33 @@ Darts.shotResults = {
 
 Darts.prototype.throw = function (score, sector) {
     
+    var game = this;
+
     sector = sector || Darts.sector.single;
     
-    var shotResult = this.currentPlayer.shoot(score, sector);
+    var shotResult = game.currentPlayer.shoot(score, sector);
     
-    var remainingPlayers = this.players.filter(function (player) {
+    var remainingPlayers = game.players.filter(function (player) {
         return !player.checkedOut;
     });
     
     if (shotResult === Darts.shotResults.checkOut || shotResult === Darts.shotResults.endTurn || shotResult === Darts.shotResults.bust) {
 
-        if (remainingPlayers.length <= 1 && this.currentPlayer === remainingPlayers[remainingPlayers.length -1]) {
+        if (remainingPlayers.length <= 1 && game.currentPlayer === remainingPlayers[remainingPlayers.length -1]) {
             
-            this.render();
-            this.endGame();
+            game.render();
+            game.endGame();
             return;
         }        
         
-        if (this.currentPlayer === remainingPlayers[0]) {
-            this.turnsCount++;
+        if (game.currentPlayer === remainingPlayers[0]) {
+            game.turnsCount++;
         }
 
-        this.setNextPlayer();
+        game.setNextPlayer();
     }
     
-    this.render();
+    game.render();
 }
 
 Darts.prototype.endGame = function () {
@@ -144,17 +148,19 @@ Darts.prototype.endGame = function () {
 
 Darts.prototype.setNextPlayer = function () {
     
-    var currentPlayerIndex = this.players.indexOf(this.currentPlayer);
+    var game = this;
+
+    var currentPlayerIndex = game.players.indexOf(game.currentPlayer);
     
-    if (this.currentPlayer === this.players[this.players.length - 1]) {
-        this.currentPlayer = this.players[0];
+    if (currentPlayerIndex === game.players.length - 1) {
+        game.currentPlayer = game.players[0];
 
     } else {
-        this.currentPlayer = this.players[currentPlayerIndex + 1];
+        game.currentPlayer = game.players[currentPlayerIndex + 1];
     }
     
-    if (this.currentPlayer.checkedOut) {
-        this.setNextPlayer();
+    if (game.currentPlayer.checkedOut) {
+        game.setNextPlayer();
     }
 }
 
