@@ -76,8 +76,16 @@ function startNewGame() {
     document.addEventListener('gameEnd', function (e) {
         var results = e.detail.results;
         
+        var ratingDiffs = {};
+
         results.forEach(function (playerResult) {
-            updateRating(playerResult, results);
+            ratingDiffs[playerResult.name] = getRatingAddon(playerResult, results);
+        });
+        
+        players.forEach(function (player) {
+            if (ratingDiffs[player.name]) {
+                player.rating += ratingDiffs[player.name];
+            }
         });
         
         players.orderBy('rating', true);
@@ -112,18 +120,28 @@ function endGame() {
     game.endGame();
 }
 
-function updateRating(winnerResult, gameResults) {
+function getRatingAddon(currentPlayerResult, gameResults) {
     
-    if (!winnerResult.checkedOut) {
+    if (!currentPlayerResult.checkedOut) {
         return;
     }
     
-    var winner = players.find(where({
-        name: winnerResult.name
+    var currentPlayer = players.find(where({
+        name: currentPlayerResult.name
     }));
     
+    var winnerResults = gameResults.filter(function (playerResult) {
+        return (playerResult.checkedOut && playerResult.turnsCount < currentPlayerResult.turnsCount);
+    });
+    
     var loserResults = gameResults.filter(function (playerResult) {
-        return (!playerResult.checkedOut || playerResult.turnsCount > winnerResult.turnsCount);
+        return (!playerResult.checkedOut || playerResult.turnsCount > currentPlayerResult.turnsCount);
+    });
+    
+    var winners = players.filter(function (player) {
+        return winnerResults.some(where({
+            name: player.name
+        }));
     });
     
     var losers = players.filter(function (player) {
@@ -132,16 +150,19 @@ function updateRating(winnerResult, gameResults) {
         }));
     });
     
-    var winnerRatingAddon = 0;
+    var userRatingAddon = 0;
     
     losers.forEach(function (loser) {
         
-        winnerRatingAddon += elo.winnerRatingAddon(winner.rating, loser.rating);
-        
-        loser.rating += elo.loserRatingAddon(winner.rating, loser.rating);
+        userRatingAddon += elo.winnerRatingAddon(currentPlayer.rating, loser.rating);
     });
     
-    winner.rating += winnerRatingAddon;
+    winners.forEach(function (winner) {
+        
+        userRatingAddon += elo.loserRatingAddon(winner.rating, currentPlayer.rating);
+    });
+    
+    return userRatingAddon;
 
 };
 
