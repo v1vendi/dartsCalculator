@@ -14,5 +14,5 @@ OnlinerRank.prototype.loserRatingAddon = function (winnerRating, loserRating) {
     if (winnerRating - loserRating >= 100) {
         return 0;
     }
-    return Math.round((100 - winnerRating + loserRating) / -20);
+    return -Math.round((100 - winnerRating + loserRating) / 10);
 }
