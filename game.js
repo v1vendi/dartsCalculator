@@ -130,41 +130,39 @@ function endGame() {
 
 function getRatingAddon(currentPlayerResult, gameResults) {
     
-    if (!currentPlayerResult.checkedOut) {
-        return 0;
-    }
-    
     var currentPlayer = players.find(where({
         name: currentPlayerResult.name
     }));
     
+    var userRatingAddon = 0;
+    
+    if (currentPlayerResult.checkedOut) {
+        var loserResults = gameResults.filter(function (playerResult) {
+            return (!playerResult.checkedOut || playerResult.turnsCount > currentPlayerResult.turnsCount);
+        });
+        
+        var losers = players.filter(function (player) {
+            return loserResults.some(where({
+                name: player.name
+            }));
+        });
+
+        losers.forEach(function (loser) {
+            
+            userRatingAddon += elo.winnerRatingAddon(currentPlayer.rating, loser.rating);
+        });
+    }
+    
     var winnerResults = gameResults.filter(function (playerResult) {
-        return (playerResult.checkedOut && playerResult.turnsCount < currentPlayerResult.turnsCount);
+        return (playerResult.checkedOut && (!currentPlayerResult.checkedOut || playerResult.turnsCount < currentPlayerResult.turnsCount));
     });
-    
-    var loserResults = gameResults.filter(function (playerResult) {
-        return (!playerResult.checkedOut || playerResult.turnsCount > currentPlayerResult.turnsCount);
-    });
-    
+
     var winners = players.filter(function (player) {
         return winnerResults.some(where({
             name: player.name
         }));
-    });
-    
-    var losers = players.filter(function (player) {
-        return loserResults.some(where({
-            name: player.name
-        }));
-    });
-    
-    var userRatingAddon = 0;
-    
-    losers.forEach(function (loser) {
+    });  
         
-        userRatingAddon += elo.winnerRatingAddon(currentPlayer.rating, loser.rating);
-    });
-    
     winners.forEach(function (winner) {
         
         userRatingAddon += elo.loserRatingAddon(winner.rating, currentPlayer.rating);
