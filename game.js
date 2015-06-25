@@ -34,7 +34,7 @@ function renderPlayers() {
 function loadPlayers() {
     var playersModel = JSON.parse(window.localStorage.getItem('dartsPlayers')) || [];
     
-    return playersModel.fiter(function(p) {
+    return playersModel.filter(function(p) {
         return p.name != "";
     }).map(function (p) {
         return new Player(p);
