@@ -42,7 +42,7 @@ function loadPlayers() {
 }
 
 function savePlayers(players) {
-    var data = players.fiter(function (p) {
+    var data = players.filter(function (p) {
         return p.name != "";
     }).map(function (player) {
         return {
