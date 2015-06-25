@@ -34,13 +34,17 @@ function renderPlayers() {
 function loadPlayers() {
     var playersModel = JSON.parse(window.localStorage.getItem('dartsPlayers')) || [];
     
-    return playersModel.map(function (p) {
+    return playersModel.fiter(function(p) {
+        return p.name != "";
+    }).map(function (p) {
         return new Player(p);
     });
 }
 
 function savePlayers(players) {
-    var data = players.map(function (player) {
+    var data = players.fiter(function (p) {
+        return p.name != "";
+    }).map(function (player) {
         return {
             name: player.name,
             rating: player.rating
@@ -102,6 +106,10 @@ function startNewGame() {
 function addPlayer() {
     var name = document.getElementById('newPlayer').value;
     
+    if (!name) {
+        return;
+    }
+
     var newPlayer = new Player({
         name: name,
         rating: 1000
@@ -123,7 +131,7 @@ function endGame() {
 function getRatingAddon(currentPlayerResult, gameResults) {
     
     if (!currentPlayerResult.checkedOut) {
-        return;
+        return 0;
     }
     
     var currentPlayer = players.find(where({
