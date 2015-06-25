@@ -115,7 +115,7 @@ Darts.prototype.throw = function (score, sector) {
     
     if (shotResult === Darts.shotResults.checkOut || shotResult === Darts.shotResults.endTurn || shotResult === Darts.shotResults.bust) {
 
-        if (remainingPlayers.length <= 1 && game.currentPlayer === remainingPlayers[remainingPlayers.length -1]) {
+        if (remainingPlayers.length === 0) {
             
             game.render();
             game.endGame();
